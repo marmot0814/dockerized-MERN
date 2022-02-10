@@ -1,0 +1,57 @@
+version: '3.7'
+
+services:
+  mongo:
+    restart: always
+    volumes:
+      - ./data:/data/db
+    image: mongo:5.0.6
+    container_name: ${APP_NAME}-mongo
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    networks:
+      - app-network
+
+  server:
+    restart: always
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    volumes:
+      - ./server/:/usr/app
+    image: ${APP_NAME}-server
+    container_name: ${APP_NAME}-server
+    ports:
+      - ${SERVER_PORT}:${SERVER_PORT}
+    environment:
+      - PORT=${SERVER_PORT}
+      - DATABASE_URL=mongodb://mongo:27017/${APP_NAME}
+      - SESSION_SECRET=${SESSION_SECRET}
+    networks:
+      - app-network
+    depends_on:
+      - mongo
+
+  client:
+    restart: always
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    volumes:
+      - ./client/:/usr/app
+    image: ${APP_NAME}-client
+    container_name: ${APP_NAME}-client
+    ports:
+      - ${CLIENT_PORT}:${CLIENT_PORT}
+    environment:
+      - PORT=${CLIENT_PORT}
+    networks:
+      - app-network
+    depends_on:
+      - server
+
+networks:
+  app-network:
+    name: ${APP_NAME}-network
+    driver: bridge
