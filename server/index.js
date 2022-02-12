@@ -27,6 +27,7 @@ app.use(session({
   },
 }));
 
+const db = require('./models')
 
 app.get('/', (req, res, next) => {
   return res.json({ message: "Hello World!" });
